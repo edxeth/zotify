@@ -146,23 +146,19 @@ def conv_artist_format(artists) -> str:
 
 
 def set_music_thumbnail(filename, image_url) -> None:
-    """ Downloads cover artwork, saves it as a JPEG, and embeds it into the music file's metadata """
+    """ Directly embeds cover artwork into the music file without saving to disk """
+    try:
+        # Download image data directly from URL
+        img_data = requests.get(image_url).content
 
-    # Determine the new image filename with .jpg extension
-    image_filename = Path(filename).parent.joinpath('cover.jpg')
+        # Load the music file and set artwork from the image data
+        tags = music_tag.load_file(filename)
+        tags['artwork'] = img_data  # Embed image data directly
+        tags.save()
 
-    # Check if the image file already exists
-    if not image_filename.exists():
-        img = requests.get(image_url).content
-        with open(image_filename, 'wb') as img_file:
-            img_file.write(img)
-        print(f"Image saved as {image_filename}")
-
-    # Add the image to the music file's metadata
-    tags = music_tag.load_file(filename)
-    with open(image_filename, 'rb') as img_file:
-        tags['artwork'] = img_file.read()
-    tags.save()
+        print(f"Embedded artwork into {filename}")
+    except Exception as e:
+        print(f"Error setting artwork for {filename}: {str(e)}")
 
 
 def regex_input_for_urls(search_input) -> Tuple[str, str, str, str, str, str]:
